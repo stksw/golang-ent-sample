@@ -23,7 +23,7 @@ func (User) Fields() []ent.Field {
 				"Enable", "ENABLE",
 				"Disable", "DISABLE",
 			).
-			Default("ACTIVE"),
+			Default("ENABLE"),
 	}
 }
 

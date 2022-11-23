@@ -1,0 +1,25 @@
+version: '3.9'
+services:
+  backend:
+    build: .
+    ports:
+      - 8000:3000
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+  db:
+    image: mysql:5.7
+    restart: always
+    container_name: entdb
+    environment:
+      MYSQL_DATABASE: ent-sample
+      MYSQL_USER: ent
+      MYSQL_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: password
+    volumes:
+      - ent-dbdata:/var/lib/mysql
+    ports:
+      - 33066:3306
+volumes:
+  ent-dbdata:

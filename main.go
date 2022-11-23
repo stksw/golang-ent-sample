@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	client, err := ent.Open("mysql", "root:password@tcp(entdb:3306)/ent-sample")
+	client, err := ent.Open("mysql", "root:password@tcp(entdb:3306)/ent-sample?parseTime=true")
 	if err != nil {
 		log.Fatalf("failed opening connection to mysql: %v", err)
 	}
@@ -28,9 +28,12 @@ func main() {
 		log.Fatalf("failed creating schema resources: %v", err)
 	}
 
-	task1, err := client.Todo.Create().SetText("Add GraphQL Example").Save(ctx)
+	items, err := client.Todo.Query().All(ctx)
 	if err != nil {
-		log.Fatalf("failed creating a todo: %v", err)
+		log.Fatalf("failed querying todos: %v", err)
 	}
-	fmt.Println(task1)
+	for _, t := range items {
+		fmt.Printf("%d: %q\n", t.ID, t.Text)
+	}
+
 }

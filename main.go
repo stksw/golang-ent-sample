@@ -4,22 +4,28 @@ import (
 	"context"
 	"ent-sample/ent"
 	"ent-sample/ent/migrate"
-	"fmt"
+	"ent-sample/repository"
 	"log"
+	"net"
 
 	_ "github.com/go-sql-driver/mysql"
 )
 
+type Application struct {
+	DB *ent.Client
+}
+
 func main() {
-	client, err := ent.Open("mysql", "root:password@tcp(entdb:3306)/ent-sample?parseTime=true")
+	client, err := repository.OpenDB()
 	if err != nil {
-		log.Fatalf("failed opening connection to mysql: %v", err)
+		log.Fatal(err)
 	}
 	defer client.Close()
-	ctx := context.Background()
+	app := Application{DB: client}
 
+	ctx := context.Background()
 	// マイグレーションの実行
-	err = client.Schema.Create(
+	err = app.DB.Schema.Create(
 		ctx,
 		migrate.WithDropIndex(true),
 		migrate.WithDropColumn(true),
@@ -28,12 +34,17 @@ func main() {
 		log.Fatalf("failed creating schema resources: %v", err)
 	}
 
-	items, err := client.Todo.Query().All(ctx)
+	app.run(ctx)
+}
+
+func (app *Application) run(ctx context.Context) error {
+	lsn, err := net.Listen("tcp", ":3000")
 	if err != nil {
-		log.Fatalf("failed querying todos: %v", err)
-	}
-	for _, t := range items {
-		fmt.Printf("%d: %q\n", t.ID, t.Text)
+		log.Fatalf("failed to listen port 3000: %v", err)
 	}
 
+	// http.Handlerが返ってくる
+	mux := app.NewMux(ctx)
+	s := NewServer(lsn, mux)
+	return s.Start(ctx)
 }
